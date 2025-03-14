@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Photopea</title>
+  <link rel="manifest" href="/manifest.json">
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      overflow: hidden;
+    }
+    iframe {
+      width: 100%;
+      height: 100%;
+      border: none;
+    }
+  </style>
+</head>
+<body>
+  <iframe id="photopeaFrame" src="https://www.photopea.com/" allowfullscreen></iframe>
+  <script>
+    // The bookmarklet code, as a string (without the "javascript:" prefix)
+    const bookmarkletCode = `(function(){
+      const s=document.createElement('style');
+      s.textContent='.app > div:nth-child(2){visibility:hidden;}';
+      document.head.appendChild(s);
+      function addResizeCanvasListener(){
+        document.addEventListener('resizecanvas',()=>{
+          const app=document.querySelector('.app')?.firstElementChild;
+          const appWidth=app?.offsetWidth||0;
+          const pageWidth=document.documentElement.clientWidth;
+          const adsWidth=window.screen.width<1500?180:320;
+          if(!app||pageWidth-appWidth===0)return;
+          try{
+            window.innerWidth=pageWidth+adsWidth;
+          }catch(e){
+            console.warn('window.innerWidth cannot be modified',e);
+          }
+          try{
+            Object.defineProperty(window,'visualViewport',{
+              configurable:true,
+              value:new Proxy(window.visualViewport,{
+                get(t,prop){
+                  return prop==='width'?pageWidth+adsWidth:t[prop];
+                }
+              })
+            });
+          }catch(e){
+            console.warn('visualViewport override failed',e);
+          }
+        });
+      }
+      document.documentElement.setAttribute('onreset',\`(\${addResizeCanvasListener})()\`);
+      document.documentElement.dispatchEvent(new CustomEvent('reset'));
+      document.documentElement.removeAttribute('onreset');
+      function resize(e={}){
+        if(!e.skip){
+          document.dispatchEvent(new CustomEvent('resizecanvas'));
+          const re=new Event('resize');
+          re.skip=true;
+          window.dispatchEvent(re);
+        }
+      }
+      let debounce;
+      window.addEventListener('resize',e=>{
+        clearTimeout(debounce);
+        debounce=setTimeout(()=>resize(e),100);
+      });
+      if(document.readyState==='complete'){
+        resize();
+      }else{
+        window.onload=()=>resize();
+      }
+      const observer=new MutationObserver((mutations,obs)=>{
+        for(const m of mutations){
+          for(const node of m.addedNodes){
+            if(node.nodeType===Node.ELEMENT_NODE&&node.classList.contains('app')){
+              console.log('app added');
+              resize();
+              obs.disconnect();
+              break;
+            }
+          }
+        }
+      });
+      observer.observe(document.body,{childList:true,subtree:true});
+    })();`;
+
+    // Attempt to run the bookmarklet inside the iframe once it loads.
+    const iframe = document.getElementById('photopeaFrame');
+    iframe.addEventListener('load', function() {
+      // Adding a short delay to help ensure Photopea is fully loaded
+      setTimeout(() => {
+        try {
+          // NOTE: Due to cross-origin restrictions, injecting code into an iframe
+          // loaded from a different origin (here, photopea.com) may be blocked by the browser.
+          // This method will work only if Photopea's page permits such access.
+          iframe.contentWindow.eval(bookmarkletCode);
+          console.log("Bookmarklet code injected successfully.");
+        } catch (e) {
+          console.error("Error injecting bookmarklet code:", e);
+        }
+      }, 3000);
+    });
+  </script>
+</body>
+</html>
