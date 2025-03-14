@@ -4,6 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Photopea</title>
+  <!-- Link to the manifest -->
+  <link rel="manifest" href="manifest.json">
   <style>
     html, body {
       margin: 0;
@@ -19,64 +21,76 @@
   </style>
 </head>
 <body>
+  <!-- Photopea iframe -->
   <iframe id="photopeaFrame" src="https://www.photopea.com/" allowfullscreen></iframe>
   <script>
-    // The bookmarklet code, as a string (without the "javascript:" prefix)
+    // Register the service worker
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/sw.js')
+        .then(function(registration) {
+          console.log('Service Worker registered with scope:', registration.scope);
+        })
+        .catch(function(error) {
+          console.error('Service Worker registration failed:', error);
+        });
+    }
+
+    // Bookmarklet code (without the "javascript:" prefix)
     const bookmarkletCode = `(function(){
-      const s=document.createElement('style');
-      s.textContent='.app > div:nth-child(2){visibility:hidden;}';
+      const s = document.createElement('style');
+      s.textContent = '.app > div:nth-child(2){visibility:hidden;}';
       document.head.appendChild(s);
       function addResizeCanvasListener(){
-        document.addEventListener('resizecanvas',()=>{
-          const app=document.querySelector('.app')?.firstElementChild;
-          const appWidth=app?.offsetWidth||0;
-          const pageWidth=document.documentElement.clientWidth;
-          const adsWidth=window.screen.width<1500?180:320;
-          if(!app||pageWidth-appWidth===0)return;
-          try{
-            window.innerWidth=pageWidth+adsWidth;
-          }catch(e){
-            console.warn('window.innerWidth cannot be modified',e);
+        document.addEventListener('resizecanvas', () => {
+          const app = document.querySelector('.app')?.firstElementChild;
+          const appWidth = app?.offsetWidth || 0;
+          const pageWidth = document.documentElement.clientWidth;
+          const adsWidth = window.screen.width < 1500 ? 180 : 320;
+          if(!app || pageWidth - appWidth === 0) return;
+          try {
+            window.innerWidth = pageWidth + adsWidth;
+          } catch(e) {
+            console.warn('window.innerWidth cannot be modified', e);
           }
-          try{
-            Object.defineProperty(window,'visualViewport',{
-              configurable:true,
-              value:new Proxy(window.visualViewport,{
-                get(t,prop){
-                  return prop==='width'?pageWidth+adsWidth:t[prop];
+          try {
+            Object.defineProperty(window, 'visualViewport', {
+              configurable: true,
+              value: new Proxy(window.visualViewport, {
+                get(t, prop) {
+                  return prop === 'width' ? pageWidth + adsWidth : t[prop];
                 }
               })
             });
-          }catch(e){
-            console.warn('visualViewport override failed',e);
+          } catch(e) {
+            console.warn('visualViewport override failed', e);
           }
         });
       }
-      document.documentElement.setAttribute('onreset',\`(\${addResizeCanvasListener})()\`);
+      document.documentElement.setAttribute('onreset', \`(\${addResizeCanvasListener})()\`);
       document.documentElement.dispatchEvent(new CustomEvent('reset'));
       document.documentElement.removeAttribute('onreset');
-      function resize(e={}){
+      function resize(e = {}){
         if(!e.skip){
           document.dispatchEvent(new CustomEvent('resizecanvas'));
-          const re=new Event('resize');
-          re.skip=true;
+          const re = new Event('resize');
+          re.skip = true;
           window.dispatchEvent(re);
         }
       }
       let debounce;
-      window.addEventListener('resize',e=>{
+      window.addEventListener('resize', e => {
         clearTimeout(debounce);
-        debounce=setTimeout(()=>resize(e),100);
+        debounce = setTimeout(() => resize(e), 100);
       });
-      if(document.readyState==='complete'){
+      if(document.readyState === 'complete'){
         resize();
-      }else{
-        window.onload=()=>resize();
+      } else {
+        window.onload = () => resize();
       }
-      const observer=new MutationObserver((mutations,obs)=>{
+      const observer = new MutationObserver((mutations, obs) => {
         for(const m of mutations){
           for(const node of m.addedNodes){
-            if(node.nodeType===Node.ELEMENT_NODE&&node.classList.contains('app')){
+            if(node.nodeType === Node.ELEMENT_NODE && node.classList.contains('app')){
               console.log('app added');
               resize();
               obs.disconnect();
@@ -85,20 +99,18 @@
           }
         }
       });
-      observer.observe(document.body,{childList:true,subtree:true});
+      observer.observe(document.body, {childList: true, subtree: true});
     })();`;
 
-    // Attempt to run the bookmarklet inside the iframe once it loads.
+    // Once the Photopea iframe loads, attempt to run the bookmarklet code inside it.
     const iframe = document.getElementById('photopeaFrame');
     iframe.addEventListener('load', function() {
-      // Adding a short delay to help ensure Photopea is fully loaded
+      // Delay to allow Photopea to fully load its content
       setTimeout(() => {
         try {
-          // NOTE: Due to cross-origin restrictions, injecting code into an iframe
-          // loaded from a different origin (here, photopea.com) may be blocked by the browser.
-          // This method will work only if Photopea's page permits such access.
+          // Note: This injection may be blocked by cross-origin restrictions.
           iframe.contentWindow.eval(bookmarkletCode);
-          console.log("Bookmarklet code injected successfully.");
+          console.log("Bookmarklet injected successfully.");
         } catch (e) {
           console.error("Error injecting bookmarklet code:", e);
         }
