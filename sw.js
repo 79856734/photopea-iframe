@@ -1,7 +1,7 @@
 const CACHE_NAME = 'photopea-cache-v1';
 const urlsToCache = [
   '/',
-  '/index.html',
+  '/index2.html',
   '/manifest.json',
   '/image-256.png'
 ];
