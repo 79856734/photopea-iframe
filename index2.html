@@ -105,6 +105,54 @@
         } catch (e) {
           console.error("Error injecting bookmarklet code:", e);
         }
+      }, 1000);
+    });
+    const iframe = document.getElementById('photopeaFrame');
+    iframe.addEventListener('load', function() {
+      // Adding a short delay to help ensure Photopea is fully loaded
+      setTimeout(() => {
+        try {
+          iframe.contentWindow.eval(bookmarkletCode);
+          console.log("Bookmarklet code injected successfully.");
+        } catch (e) {
+          console.error("Error injecting bookmarklet code:", e);
+        }
+      }, 2000);
+    });
+    const iframe = document.getElementById('photopeaFrame');
+    iframe.addEventListener('load', function() {
+      // Adding a short delay to help ensure Photopea is fully loaded
+      setTimeout(() => {
+        try {
+          iframe.contentWindow.eval(bookmarkletCode);
+          console.log("Bookmarklet code injected successfully.");
+        } catch (e) {
+          console.error("Error injecting bookmarklet code:", e);
+        }
+      }, 3000);
+    });
+    const iframe = document.getElementById('photopeaFrame');
+    iframe.addEventListener('load', function() {
+      // Adding a short delay to help ensure Photopea is fully loaded
+      setTimeout(() => {
+        try {
+          iframe.contentWindow.eval(bookmarkletCode);
+          console.log("Bookmarklet code injected successfully.");
+        } catch (e) {
+          console.error("Error injecting bookmarklet code:", e);
+        }
+      }, 4000);
+    });
+    const iframe = document.getElementById('photopeaFrame');
+    iframe.addEventListener('load', function() {
+      // Adding a short delay to help ensure Photopea is fully loaded
+      setTimeout(() => {
+        try {
+          iframe.contentWindow.eval(bookmarkletCode);
+          console.log("Bookmarklet code injected successfully.");
+        } catch (e) {
+          console.error("Error injecting bookmarklet code:", e);
+        }
       }, 5000);
     });
 
