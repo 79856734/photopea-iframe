@@ -1,22 +1,29 @@
-self.addEventListener('install', event => {
-  event.waitUntil(
-    caches.open('photopea-cache').then(cache => {
-      return cache.addAll([
-        './',
-        'index2.html',
-        'manifest.json',
-        'image-256.png',
-        'image-512.png',
-        // Add other assets as needed
-      ]);
-    })
-  );
+/*!
+ * Licensed under MIT
+ * https://github.com/TheNocoder/pwa-via-iframe
+ */
+
+self.addEventListener('install', function(event) {
+    var offlineRequest = new Request('/pwa-via-iframe/example-ipwa/offline.html');
+    event.waitUntil(
+        fetch(offlineRequest).then(function(response) {
+            return caches.open('offline').then(function(cache) {
+                return cache.put(offlineRequest, response);
+            });
+        })
+    );
 });
 
-self.addEventListener('fetch', event => {
-  event.respondWith(
-    caches.match(event.request).then(response => {
-      return response || fetch(event.request);
-    })
-  );
+self.addEventListener('fetch', function(event) {
+    var request = event.request;
+    if (request.method === 'GET') {
+        event.respondWith(
+            fetch(request).catch(function(error) {
+                return caches.open('offline').then(function(cache) {
+                    return cache.match('/pwa-via-iframe/example-ipwa/offline.html');
+                });
+            })
+        );
+    }
 });
+
