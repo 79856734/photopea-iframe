@@ -4,7 +4,7 @@
  */
 
 self.addEventListener('install', function(event) {
-    var offlineRequest = new Request('/pwa-via-iframe/example-ipwa/offline.html');
+    var offlineRequest = new Request('/photopea-iframe/offline.html');
     event.waitUntil(
         fetch(offlineRequest).then(function(response) {
             return caches.open('offline').then(function(cache) {
@@ -20,7 +20,7 @@ self.addEventListener('fetch', function(event) {
         event.respondWith(
             fetch(request).catch(function(error) {
                 return caches.open('offline').then(function(cache) {
-                    return cache.match('/pwa-via-iframe/example-ipwa/offline.html');
+                    return cache.match('/photopea-iframe/offline.html');
                 });
             })
         );
