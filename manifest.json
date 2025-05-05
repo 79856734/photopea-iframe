@@ -1,13 +1,13 @@
 {
     "short_name": "Iframe PWA",
-    "name": "My IFrame Progressive Web App",
-    "description": "My Progressive Web App via iframe",
+    "name": "Photopea",
+    "description": "Photopea without ADs",
     "id": "/",
     "start_url": "/",
     "display": "standalone",
     "scope": "/",
     "background_color": "#FFFFFF",
-    "theme_color": "#000000",
+    "theme_color": "#18a497",
     "icons": [
         {
             "src": "/icons/32x32.png",
