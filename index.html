@@ -1,33 +1,30 @@
 <!DOCTYPE html>
-<html lang="">
+<html lang="en">
 <head>
-  <!-- https://github.com/TheNocoder/pwa-via-iframe -->
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="mobile-web-app-capable" content="yes">
-  <meta name="application-name" content="Photopea no ADs">
-  <meta name="apple-mobile-web-app-title" content="Photopea no ADs">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <link rel="manifest" href="/photopea-iframe/manifest.json">
-  <title>Photopea no ADs</title>
-  <style>
-    body, html { overflow: hidden; height: 100%; width: 100%; margin: 0; }
-    #container { position: absolute; top: 0; left: 0; right: 0; bottom: 0; }
-    iframe { width: 100%; height: 100%; border: none; }
-  </style>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Photopea no ADs</title>
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="application-name" content="Photopea no ADs">
+    <meta name="apple-mobile-web-app-title" content="Photopea no ADs">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <link rel="manifest" href="/photopea-iframe/manifest.json">
+    <style>
+        body, html {
+            overflow: hidden;
+            height: 100%;
+            width: 100%;
+        }
+    </style>
 </head>
 <body>
-  <div id="container">
-    <iframe
-      id="photopeaFrame"
-      src="https://photopea.com/"
-      allowfullscreen
-      referrerpolicy="no-referrer"
-    ></iframe>
-  </div>
+    <div style="width:100%; height:100%; overflow: hidden; position: absolute; top: 0; left: 0;">
+        <!-- Added id for iframe reference -->
+        <iframe id="photopeaFrame" src="https://photopea.com/" style="width: 100%; height: 100%; border: none;" allowfullscreen></iframe>
+    </div>
 
-  <script>
-    // The bookmarklet code, exactly as provided (unchanged)
+    <script>
+    // The bookmarklet code, as a string (without the "javascript:" prefix)
     const bookmarkletCode = `(function(){
       const s=document.createElement('style');
       s.textContent='.app > div:nth-child(2){visibility:hidden;}';
@@ -39,54 +36,32 @@
           const pageWidth=document.documentElement.clientWidth;
           const adsWidth=window.screen.width<1500?180:320;
           if(!app||pageWidth-appWidth===0)return;
-          try{
-            window.innerWidth=pageWidth+adsWidth;
-          }catch(e){
-            console.warn('window.innerWidth cannot be modified',e);
-          }
+          try{ window.innerWidth=pageWidth+adsWidth; }catch(e){ console.warn('window.innerWidth cannot be modified',e); }
           try{
             Object.defineProperty(window,'visualViewport',{
               configurable:true,
-              value:new Proxy(window.visualViewport,{
-                get(t,prop){
-                  return prop==='width'?pageWidth+adsWidth:t[prop];
-                }
-              })
+              value:new Proxy(window.visualViewport,{ get(t,prop){ return prop==='width'?pageWidth+adsWidth:t[prop]; } })
             });
-          }catch(e){
-            console.warn('visualViewport override failed',e);
-          }
+          }catch(e){ console.warn('visualViewport override failed',e); }
         });
       }
-      document.documentElement.setAttribute('onreset',\`(\${addResizeCanvasListener})()\`);
+      document.documentElement.setAttribute('onreset',`(${addResizeCanvasListener})()`);
       document.documentElement.dispatchEvent(new CustomEvent('reset'));
       document.documentElement.removeAttribute('onreset');
       function resize(e={}){
         if(!e.skip){
           document.dispatchEvent(new CustomEvent('resizecanvas'));
-          const re=new Event('resize');
-          re.skip=true;
-          window.dispatchEvent(re);
+          const re=new Event('resize'); re.skip=true; window.dispatchEvent(re);
         }
       }
       let debounce;
-      window.addEventListener('resize',e=>{
-        clearTimeout(debounce);
-        debounce=setTimeout(()=>resize(e),100);
-      });
-      if(document.readyState==='complete'){
-        resize();
-      }else{
-        window.onload=()=>resize();
-      }
+      window.addEventListener('resize',e=>{ clearTimeout(debounce); debounce=setTimeout(()=>resize(e),100); });
+      if(document.readyState==='complete'){ resize(); } else { window.onload=()=>resize(); }
       const observer=new MutationObserver((mutations,obs)=>{
         for(const m of mutations){
           for(const node of m.addedNodes){
             if(node.nodeType===Node.ELEMENT_NODE&&node.classList.contains('app')){
-              console.log('app added');
-              resize();
-              obs.disconnect();
-              break;
+              console.log('app added'); resize(); obs.disconnect(); break;
             }
           }
         }
@@ -94,29 +69,37 @@
       observer.observe(document.body,{childList:true,subtree:true});
     })();`;
 
-    // single listener; schedule 25 injection attempts at 1s intervals
+    // Inject bookmarklet 45 times at 200ms intervals after iframe loads
     const iframe = document.getElementById('photopeaFrame');
     iframe.addEventListener('load', () => {
-      for (let attempt = 1; attempt <= 25; attempt++) {
-        setTimeout(() => {
-          try {
+      // Give Photopea a moment to initialize
+      setTimeout(() => {
+        try {
+          let count = 0;
+          const maxRuns = 45;
+          const interval = setInterval(() => {
+            if (count >= maxRuns) {
+              clearInterval(interval);
+              console.log(`Injected bookmarklet ${maxRuns} times`);
+              return;
+            }
             iframe.contentWindow.eval(bookmarkletCode);
-            console.log(`Injection ${attempt} succeeded.`);
-          } catch (e) {
-            console.error(`Injection ${attempt} failed:`, e);
-          }
-        }, attempt * 1000);
-      }
+            count++;
+          }, 200);
+        } catch (e) {
+          console.error('Error injecting bookmarklet code:', e);
+        }
+      }, 1000);
     });
 
-    // register service worker for PWA support
-    window.addEventListener('load', () => {
+    // Register service worker for offline support
+    window.addEventListener('load', function() {
       if ('serviceWorker' in navigator) {
         navigator.serviceWorker.register('/photopea-iframe/service-worker.js')
-          .then(() => console.log('SW registered'))
-          .catch(console.error);
+          .then(reg => console.log('Service Worker registered', reg))
+          .catch(err => console.error('Service Worker registration failed', err));
       }
     });
-  </script>
+    </script>
 </body>
 </html>
