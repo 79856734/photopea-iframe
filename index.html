@@ -1,29 +1,33 @@
 <!DOCTYPE html>
 <html lang="">
-    <!-- https://github.com/TheNocoder/pwa-via-iframe -->
-    <head>
-        <title>Photopea no ADs</title>
-        <meta charset="utf-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1">
-        <meta name="mobile-web-app-capable" content="yes">
-        <meta name="application-name" content="Photopea no ADs">
-        <meta name="apple-mobile-web-app-title" content="Photopea no ADs">
-        <meta name="apple-mobile-web-app-capable" content="yes">
-        <link rel="manifest" href="/photopea-iframe/manifest.json">
-        <style>
-            body, html {
-                overflow: hidden;
-                height: 100%;
-                width: 100%;
-            }
-        </style>
-    </head>
-    <body>
-        <div style="width:100%; height:100%; overflow: hidden; position: absolute; top: 0; left: 0; right: 0; bottom: 0;">
-            <iframe src="https://photopea.com/" style="width: 100%;height: 100%;border: none; overflow: auto;" allowfullscreen></iframe>
-        </div>
-        <script>
-    // The bookmarklet code, as a string (without the "javascript:" prefix)
+<head>
+  <!-- https://github.com/TheNocoder/pwa-via-iframe -->
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="application-name" content="Photopea no ADs">
+  <meta name="apple-mobile-web-app-title" content="Photopea no ADs">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <link rel="manifest" href="/photopea-iframe/manifest.json">
+  <title>Photopea no ADs</title>
+  <style>
+    body, html { overflow: hidden; height: 100%; width: 100%; margin: 0; }
+    #container { position: absolute; top: 0; left: 0; right: 0; bottom: 0; }
+    iframe { width: 100%; height: 100%; border: none; }
+  </style>
+</head>
+<body>
+  <div id="container">
+    <iframe
+      id="photopeaFrame"
+      src="https://photopea.com/"
+      allowfullscreen
+      referrerpolicy="no-referrer"
+    ></iframe>
+  </div>
+
+  <script>
+    // The bookmarklet code, exactly as provided (unchanged)
     const bookmarkletCode = `(function(){
       const s=document.createElement('style');
       s.textContent='.app > div:nth-child(2){visibility:hidden;}';
@@ -90,77 +94,29 @@
       observer.observe(document.body,{childList:true,subtree:true});
     })();`;
 
-    // Attempt to run the bookmarklet inside the iframe once it loads.
+    // single listener; schedule 25 injection attempts at 1s intervals
     const iframe = document.getElementById('photopeaFrame');
-    iframe.addEventListener('load', function() {
-      // Adding a short delay to help ensure Photopea is fully loaded
-      setTimeout(() => {
-        try {
-          // NOTE: Due to cross-origin restrictions, injecting code into an iframe
-          // loaded from a different origin (here, photopea.com) may be blocked by the browser.
-          // This method will work only if Photopea's page permits such access.
-          iframe.contentWindow.eval(bookmarkletCode);
-          console.log("Bookmarklet code injected successfully.");
-        } catch (e) {
-          console.error("Error injecting bookmarklet code:", e);
-        }
-      }, 1000);
-    });
-    const iframe = document.getElementById('photopeaFrame');
-    iframe.addEventListener('load', function() {
-      // Adding a short delay to help ensure Photopea is fully loaded
-      setTimeout(() => {
-        try {
-          iframe.contentWindow.eval(bookmarkletCode);
-          console.log("Bookmarklet code injected successfully.");
-        } catch (e) {
-          console.error("Error injecting bookmarklet code:", e);
-        }
-      }, 2000);
-    });
-    const iframe = document.getElementById('photopeaFrame');
-    iframe.addEventListener('load', function() {
-      // Adding a short delay to help ensure Photopea is fully loaded
-      setTimeout(() => {
-        try {
-          iframe.contentWindow.eval(bookmarkletCode);
-          console.log("Bookmarklet code injected successfully.");
-        } catch (e) {
-          console.error("Error injecting bookmarklet code:", e);
-        }
-      }, 3000);
-    });
-    const iframe = document.getElementById('photopeaFrame');
-    iframe.addEventListener('load', function() {
-      // Adding a short delay to help ensure Photopea is fully loaded
-      setTimeout(() => {
-        try {
-          iframe.contentWindow.eval(bookmarkletCode);
-          console.log("Bookmarklet code injected successfully.");
-        } catch (e) {
-          console.error("Error injecting bookmarklet code:", e);
-        }
-      }, 4000);
-    });
-    const iframe = document.getElementById('photopeaFrame');
-    iframe.addEventListener('load', function() {
-      // Adding a short delay to help ensure Photopea is fully loaded
-      setTimeout(() => {
-        try {
-          iframe.contentWindow.eval(bookmarkletCode);
-          console.log("Bookmarklet code injected successfully.");
-        } catch (e) {
-          console.error("Error injecting bookmarklet code:", e);
-        }
-      }, 5000);
+    iframe.addEventListener('load', () => {
+      for (let attempt = 1; attempt <= 25; attempt++) {
+        setTimeout(() => {
+          try {
+            iframe.contentWindow.eval(bookmarkletCode);
+            console.log(`Injection ${attempt} succeeded.`);
+          } catch (e) {
+            console.error(`Injection ${attempt} failed:`, e);
+          }
+        }, attempt * 1000);
+      }
     });
 
-            var serviceWorkerReg = false;
-            window.addEventListener('load', function() {
-                if ('serviceWorker' in navigator) {
-                    serviceWorkerReg = navigator.serviceWorker.register('/photopea-iframe/service-worker.js');
-                }
-            });
-        </script>
-    </body>
+    // register service worker for PWA support
+    window.addEventListener('load', () => {
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('/photopea-iframe/service-worker.js')
+          .then(() => console.log('SW registered'))
+          .catch(console.error);
+      }
+    });
+  </script>
+</body>
 </html>
